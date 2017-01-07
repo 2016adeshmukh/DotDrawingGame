@@ -1,0 +1,289 @@
+<html>
+<script type="text/javascript">
+	dotx=[];
+	doty=[];
+	place=0;
+	redindex=[];
+	redder=0;
+	counter=0;
+	controlled=false;
+	controlcheck=true;
+	pointX=0;	//starting points for rectangles
+	pointY=0;
+	isdot=false;
+	whichdot=0;
+	between=false;
+	function init()
+	{
+		canvas=document.getElementById("myCan");
+		ctx=canvas.getContext('2d');
+		canvas.addEventListener("mousedown", mouseDown, false);
+		canvas.addEventListener("mouseup", mouseUp, false);
+		canvas.addEventListener("mousemove", mouseMove, false);
+		canvas.addEventListener("keydown", keysdown, false);
+		canvas.addEventListener("keyup", keysup, false);
+		canvas.setAttribute('tabindex', '0');
+		canvas.focus();
+	}
+	function checkdot()
+	{
+		for(temp=0;temp<place;temp++)
+		{
+			checkx=Math.abs(pointX-dotx[temp]);
+			checky=Math.abs(pointY-doty[temp]);
+			checkx=checkx*checkx;
+			checky=checky*checky;
+			checkr=checkx+checky;
+			if(checkr<64)
+			{
+				whichdot=temp;
+				isdot=true;
+			}
+		}
+	}
+	function mouseDown(event)
+	{
+		isdot=false;
+		pointX=event.pageX-canvas.offsetLeft;
+		pointY=event.pageY-canvas.offsetTop;
+		checkdot();
+		counter=0;
+		between=true;
+	}
+	function mouseMove(event)
+	{
+		counter++;
+		if(counter>15 && between)
+		{
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+			drawit();
+			endX=(event.pageX-canvas.offsetLeft)-pointX;
+			endY=(event.pageY-canvas.offsetTop)-pointY;
+			ctx.beginPath();
+			ctx.lineWidth="2";
+			ctx.strokeStyle="#000000";
+			ctx.setLineDash([6]);
+			ctx.rect(pointX,pointY,endX,endY);
+			ctx.stroke();
+		}
+	}
+	function mouseUp(event)
+	{
+		endX=(event.pageX-canvas.offsetLeft)-pointX;
+		endY=(event.pageY-canvas.offsetTop)-pointY;
+		between=false;
+		if(counter<15)
+		{
+			if(controlled)
+			{
+				if(isdot)
+				{
+					redindex[redder]=whichdot;
+					redder++;
+					drawit();
+				}
+				else
+				{
+					clicked(event);
+					drawit();
+				}
+			}
+			else
+			{
+				if(isdot)
+				{
+					redindex=[];
+					redder=0;
+					redindex[redder]=whichdot;
+					redder++;
+					drawit();
+				}
+				else
+				{
+					redindex=[];
+					redder=0;
+					clicked(event);
+					drawit();
+				}
+			}
+		}
+		else
+		{
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+			if(controlled)
+			{
+				lightmeup();
+				drawit();
+			}
+			else
+			{
+				//redindex=[];
+				//redder=0;
+				lightmeup();
+				drawit();
+			}
+		}
+	}
+	function clicked(event)
+	{
+		startX=event.pageX-canvas.offsetLeft;
+		startY=event.pageY-canvas.offsetTop;
+		dotx[place]=startX;
+		doty[place]=startY;
+		redindex[redder]=place;
+		redder++;
+		place++;
+		drawit();
+	}
+	function drawit()
+	{
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		drawing=true;
+		for(temp=0;temp<place;temp++)
+		{
+			drawing=true;
+			for(tempa=0;tempa<redder;tempa++)
+			{
+				if(redindex[tempa]==temp)
+				{
+					drawing=false;
+				}
+			}
+			if(drawing)
+			{
+				ctx.beginPath();
+				ctx.fillStyle="#000000"; 
+				ctx.strokeStyle="#000000";
+				ctx.arc(dotx[temp],doty[temp],8,0,2*Math.PI);
+				ctx.fill();
+				ctx.stroke();
+			}
+			else
+			{
+				ctx.beginPath();
+				ctx.fillStyle="#FF0000"; 
+				ctx.strokeStyle="#FF0000";
+				ctx.arc(dotx[temp],doty[temp],8,0,2*Math.PI);
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+	}
+	function cleared()
+	{
+		redindex=[];
+		redder=0;
+		dotx=[];
+		doty=[];
+		place=0;
+		drawit();
+	}
+	function keysdown(event)
+	{
+		if(event.keyCode==65)
+		{
+			if(controlcheck)
+			{
+				controlled=true;
+				controlcheck=false;
+			}
+		}
+		if(event.keyCode==27)
+		{
+			redindex=[];
+			redder=0;
+			drawit();
+		}
+	}
+	function keysup()
+	{
+		controlled=false;
+		controlcheck=true;
+	}
+	function lightmeup()
+	{
+		rectarr=[];
+		rectarr[0]=pointX;
+		rectarr[1]=pointY;
+		rectarr[2]=0;
+		rectarr[3]=0;
+		rectarr[4]=pointX+endX;
+		rectarr[5]=pointY+endY;
+		for(temp=0;temp<place;temp++)
+			{
+				if(rectarr[0]<rectarr[4]&&rectarr[1]<rectarr[5])
+				{
+					if(dotx[temp]>rectarr[0]&&dotx[temp]<rectarr[4]&&doty[temp]>rectarr[1]&&doty[temp]<rectarr[5])
+					{
+						redindex[redder]=temp;
+						redder++;
+						drawit();
+					}
+				}
+				if(rectarr[0]<rectarr[4]&&rectarr[1]>rectarr[5])
+				{
+					if(dotx[temp]>rectarr[0]&&dotx[temp]<rectarr[4]&&doty[temp]<rectarr[1]&&doty[temp]>rectarr[5])
+					{
+						
+						redindex[redder]=temp;
+						redder++;
+						drawit();
+					}
+				}
+				if(rectarr[0]>rectarr[4]&&rectarr[1]<rectarr[5])
+				{
+					if(dotx[temp]<rectarr[0]&&dotx[temp]>rectarr[4]&&doty[temp]>rectarr[1]&&doty[temp]<rectarr[5])
+					{
+						redindex[redder]=temp;
+						redder++;
+						drawit();
+					}
+				}
+				else
+				{
+					if(dotx[temp]<rectarr[0]&&dotx[temp]>rectarr[4]&&doty[temp]<rectarr[1]&&doty[temp]>rectarr[5])
+					{
+						redindex[redder]=temp;
+						redder++;
+						drawit();
+					}
+				}
+			}
+	}
+	function undoit()
+	{
+		alert("In Progress!");
+	}
+</script>
+
+<body onload="init()">
+	<h1 align="center"> This is a Canvas </h1>
+	<div>
+		<button id="clear" type=button class="pure-button" accesskey="c" onclick="cleared()"> <u>C</u>lear </button>
+		<button id="undo" type=button class="pure-button" accesskey="u" onclick="undoit()"> <u>U</u>ndo </button>
+	</div>
+	<canvas id="myCan" width="800" height="700" style="border: 1px solid black;">
+</body>
+
+<style>
+	#clear
+	{
+		position:absolute;
+		right:44%;
+		top:7%;
+	}
+	#undo
+	{
+		position:absolute;
+		right:54%;
+		top:7%;
+	}
+	#myCan
+	{
+		position:absolute;
+		right:30%;
+		top:10%;
+		outline:none;
+	}
+</style>
+</html>
